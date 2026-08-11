@@ -1,0 +1,55 @@
+{
+  "name": "mcp-aena",
+  "mcpName": "io.github.MrGo2/aena-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for AENA Spanish airport flight data - unified over the public website API and the OAuth2 REST API",
+  "type": "module",
+  "bin": {
+    "aena-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist/",
+    "LICENSE",
+    "README.md",
+    ".env.example"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc && node dist/index.js",
+    "inspect": "npm run build && npx @modelcontextprotocol/inspector node dist/index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MrGo2/aena-mcp.git"
+  },
+  "homepage": "https://github.com/MrGo2/aena-mcp#readme",
+  "bugs": {
+    "url": "https://github.com/MrGo2/aena-mcp/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "mcp",
+    "mcp-server",
+    "model-context-protocol",
+    "aena",
+    "flights",
+    "airport",
+    "spain",
+    "flight-tracking",
+    "claude"
+  ],
+  "author": "Carlos Lorenzo",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "dotenv": "^16.4.5",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.6.0"
+  }
+}

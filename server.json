@@ -1,0 +1,41 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.MrGo2/aena-mcp",
+  "description": "Flight data for the 50 Spanish AENA airports, unified over the public website API and the OAuth2 REST API",
+  "version": "0.1.0",
+  "repository": {
+    "url": "https://github.com/MrGo2/aena-mcp",
+    "source": "github"
+  },
+  "websiteUrl": "https://github.com/MrGo2/aena-mcp#readme",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "mcp-aena",
+      "version": "0.1.0",
+      "transport": { "type": "stdio" },
+      "environmentVariables": [
+        {
+          "name": "AENA_CLIENT_SECRET",
+          "description": "OAuth2 client secret for the REST API. Omit for website-only mode (still fully functional for discovery).",
+          "isRequired": false,
+          "isSecret": true
+        },
+        {
+          "name": "AENA_CLIENT_ID",
+          "description": "OAuth2 client id. Has a working default.",
+          "isRequired": false,
+          "isSecret": false
+        },
+        {
+          "name": "AENA_TENANT_ID",
+          "description": "Azure AD tenant id. Has a working default.",
+          "isRequired": false,
+          "isSecret": false
+        }
+      ]
+    }
+  ],
+  "title": "AENA Flights MCP"
+}
