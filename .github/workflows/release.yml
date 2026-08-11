@@ -99,7 +99,9 @@ jobs:
       - name: Build .mcpb bundle
         run: |
           # A .mcpb is self-contained: it needs dist/ (already built) plus the
-          # runtime node_modules. Flat npm layout packs cleanly.
+          # runtime node_modules. npm chokes on pnpm's symlinked node_modules
+          # ("Cannot read properties of null"), so rebuild it flat first.
+          rm -rf node_modules
           npm install --omit=dev --ignore-scripts
           npm install -g @anthropic-ai/mcpb
           mcpb pack
