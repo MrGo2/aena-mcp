@@ -8,38 +8,10 @@ import { dirname, join } from "node:path";
 
 import { config, hasRestCredentials } from "./config.js";
 import { fetchWebsite, fetchRest, fetchAirports, type Flight } from "./aena/client.js";
+import { matchesFlight, formatFlight } from "./format.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const { version } = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
-
-const norm = (s: string) => s.toUpperCase().replace(/[^A-Z0-9]/g, "");
-
-function matchesFlight(f: Flight, query?: string): boolean {
-  if (!query) return true;
-  return norm(f.flightNumber).includes(norm(query));
-}
-
-function formatFlight(f: Flight): string {
-  const time = f.scheduledUtc
-    ? `${f.scheduledUtc}${f.estimatedUtc && f.estimatedUtc !== f.scheduledUtc ? ` → ${f.estimatedUtc}` : ""} (UTC)`
-    : `${f.date ?? ""} ${f.scheduledLocal ?? ""}${f.estimatedLocal && f.estimatedLocal !== f.scheduledLocal ? ` → ${f.estimatedLocal}` : ""} (local)`.trim();
-  const route = f.direction === "arrivals" ? `${f.otherAirport ?? "?"} → ${f.airport}` : `${f.airport} → ${f.otherAirport ?? "?"}`;
-  const bits = [
-    `${f.flightNumber}  ${route}`,
-    `  ${time}  [${f.statusLabel}${f.status ? ` / ${f.status}` : ""}]`,
-    [
-      f.airline.name && `airline: ${f.airline.name}`,
-      f.terminal && `terminal ${f.terminal}`,
-      f.aircraft && `aircraft ${f.aircraft}`,
-      f.gate && `gate ${f.gate}`,
-      f.baggageBelt && `belt ${f.baggageBelt}`,
-    ]
-      .filter(Boolean)
-      .join("  ·  "),
-    f.mainFlight?.flightNumber && `  operated by ${f.mainFlight.airline}${f.mainFlight.flightNumber} (codeshare)`,
-  ].filter(Boolean);
-  return bits.join("\n");
-}
 
 const server = new McpServer(
   { name: "aena-mcp", version, title: "AENA Flights MCP" },

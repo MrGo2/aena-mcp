@@ -9,9 +9,11 @@ loadEnv({ path: join(__dirname, "..", ".env") });
 
 export const config = {
   // REST API (OAuth2 Azure AD). Empty client secret => website-only mode.
-  AENA_CLIENT_ID: process.env.AENA_CLIENT_ID ?? "34242493-003c-407a-b399-30eb2a280614",
+  // id/tenant use `||` so a blank env var (DXT injects "") falls back to the
+  // working default; the secret uses `??` so blank stays blank on purpose.
+  AENA_CLIENT_ID: process.env.AENA_CLIENT_ID || "34242493-003c-407a-b399-30eb2a280614",
   AENA_CLIENT_SECRET: process.env.AENA_CLIENT_SECRET ?? "",
-  AENA_TENANT_ID: process.env.AENA_TENANT_ID ?? "3ea6ba9c-a793-4c35-b1c1-e9d182879576",
+  AENA_TENANT_ID: process.env.AENA_TENANT_ID || "3ea6ba9c-a793-4c35-b1c1-e9d182879576",
 
   WEBSITE_BASE: "https://www.aena.es/sites/Satellite",
   REST_URL: "https://api.aena.es/b2b-flights/api/v1/flights",

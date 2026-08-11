@@ -1,0 +1,33 @@
+# Files excluded from the .mcpb release bundle. Keep dist/ and node_modules —
+# the bundle runs dist/index.js and needs its runtime dependencies.
+
+# Source and tests (dist/ is what runs)
+src/
+test/
+tsconfig.json
+
+# Local tooling / agent state
+.claude/
+.remember/
+.github/
+
+# Source control and env
+.git/
+.gitignore
+.mcpbignore
+.npmrc
+.env
+.env.*
+!.env.example
+
+# Build and release artifacts
+*.mcpb
+*.tgz
+pnpm-lock.yaml
+package-lock.json
+
+# Registry / CI descriptors not needed at runtime
+server.json
+
+# OS noise
+.DS_Store

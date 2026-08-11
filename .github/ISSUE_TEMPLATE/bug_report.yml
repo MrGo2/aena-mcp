@@ -1,0 +1,46 @@
+name: Bug report
+description: Something doesn't work
+labels: [bug]
+body:
+  - type: dropdown
+    id: source
+    attributes:
+      label: Data source
+      options:
+        - REST (OAuth2, client secret set)
+        - Website (no credentials)
+        - auto / not sure
+    validations:
+      required: true
+  - type: input
+    id: client
+    attributes:
+      label: MCP client
+      placeholder: e.g. Claude Desktop 1.x, Claude Code, VS Code
+    validations:
+      required: true
+  - type: input
+    id: node
+    attributes:
+      label: Node version
+      placeholder: e.g. 22.x
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: The tool you called, the arguments (airport, direction, flight number), and the error you got.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: If using the REST API, AENA_CLIENT_SECRET is set
+        - label: I checked the README for the airport IATA code and the arrivals/departures wording

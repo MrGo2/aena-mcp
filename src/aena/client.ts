@@ -26,31 +26,25 @@ export interface Flight {
   source: "website" | "rest";
 }
 
-const clean = (v: unknown): string | undefined => {
+export const clean = (v: unknown): string | undefined => {
   const s = typeof v === "string" ? v.trim() : v == null ? "" : String(v);
   return s && s !== "null" ? s : undefined;
 };
 
 // airlineCodes / codigosCompania: 6 CSV slots
 // [IATA, ICAO, operatorIATA, commercialIATA, operatorICAO, commercialICAO]
-const parseAirlineCodes = (raw?: string): { iata?: string; icao?: string } => {
+export const parseAirlineCodes = (raw?: string): { iata?: string; icao?: string } => {
   const p = (raw ?? "").split(",");
   return { iata: clean(p[0]), icao: clean(p[1]) };
 };
 
-// ── Website API (public, no auth) ─────────────────────────────────────────────
-export async function fetchWebsite(
+// ── Pure normalizers (no network — unit-tested) ───────────────────────────────
+export function normalizeWebsiteRow(
+  r: any,
   airport: string,
   direction: "arrivals" | "departures",
-): Promise<Flight[]> {
-  const flightType = direction === "arrivals" ? "L" : "S";
-  const url =
-    `${config.WEBSITE_BASE}?pagename=AENA_ConsultarVuelos` +
-    `&airport=${encodeURIComponent(airport)}&flightType=${flightType}&dosDias=si`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`Website API ${res.status} for ${airport}`);
-  const rows = (await res.json()) as any[];
-  return rows.map((r) => ({
+): Flight {
+  return {
     flightNumber: `${clean(r.iataCompania) ?? clean(r.compania) ?? ""}${clean(r.numVuelo) ?? ""}`,
     airline: {
       iata: clean(r.iataCompania),
@@ -71,7 +65,56 @@ export async function fetchWebsite(
     gate: clean(r.puertaPrimera),
     baggageBelt: clean(r.cintaPrimera),
     source: "website",
-  }));
+  };
+}
+
+export function normalizeRestRow(
+  r: any,
+  airport: string,
+  direction: "arrivals" | "departures",
+): Flight {
+  const codes = parseAirlineCodes(r.airlineCodes);
+  const mf = r.mainFlight;
+  return {
+    // In REST, flightID.airlineIATA actually carries the ICAO code.
+    flightNumber: `${clean(r.flightID?.airlineIATA) ?? codes.icao ?? ""}${clean(r.flightID?.flightNumber) ?? ""}`,
+    airline: { iata: codes.iata, icao: clean(r.flightID?.airlineIATA) ?? codes.icao },
+    airport: clean(r.flightID?.airportIATA) ?? airport,
+    otherAirport: clean(r.airportIATATo) ?? clean(r.airportIATAFrom),
+    direction,
+    status: clean(r.flightStatus),
+    statusLabel: statusLabel(clean(r.flightStatus)),
+    scheduledUtc: clean(r.flightID?.scheduledDate),
+    estimatedUtc: clean(r.actualDate),
+    terminal: clean(r.arrivingTerminal),
+    aircraft: clean(r.airplaneModel),
+    gate: clean(r.boardingGate?.firstBoardingGate),
+    baggageBelt: clean(r.baggageClaim?.firstBaggageClaim),
+    mainFlight: mf
+      ? {
+          airline: clean(mf.airlineIATA) ?? "",
+          flightNumber: clean(mf.flightNumber) ?? "",
+          // typo in AENA's API: "aiportIATA" (missing r)
+          airport: clean(mf.aiportIATA) ?? clean(mf.airportIATA),
+        }
+      : undefined,
+    source: "rest",
+  };
+}
+
+// ── Website API (public, no auth) ─────────────────────────────────────────────
+export async function fetchWebsite(
+  airport: string,
+  direction: "arrivals" | "departures",
+): Promise<Flight[]> {
+  const flightType = direction === "arrivals" ? "L" : "S";
+  const url =
+    `${config.WEBSITE_BASE}?pagename=AENA_ConsultarVuelos` +
+    `&airport=${encodeURIComponent(airport)}&flightType=${flightType}&dosDias=si`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`Website API ${res.status} for ${airport}`);
+  const rows = (await res.json()) as any[];
+  return rows.map((r) => normalizeWebsiteRow(r, airport, direction));
 }
 
 // ── REST API (OAuth2 Azure AD) ────────────────────────────────────────────────
@@ -114,35 +157,7 @@ export async function fetchRest(
   });
   if (!res.ok) throw new Error(`REST API ${res.status}: ${await res.text()}`);
   const rows = (await res.json()) as any[];
-  return rows.map((r) => {
-    const codes = parseAirlineCodes(r.airlineCodes);
-    const mf = r.mainFlight;
-    return {
-      // In REST, flightID.airlineIATA actually carries the ICAO code.
-      flightNumber: `${clean(r.flightID?.airlineIATA) ?? codes.icao ?? ""}${clean(r.flightID?.flightNumber) ?? ""}`,
-      airline: { iata: codes.iata, icao: clean(r.flightID?.airlineIATA) ?? codes.icao },
-      airport: clean(r.flightID?.airportIATA) ?? airport,
-      otherAirport: clean(r.airportIATATo) ?? clean(r.airportIATAFrom),
-      direction,
-      status: clean(r.flightStatus),
-      statusLabel: statusLabel(clean(r.flightStatus)),
-      scheduledUtc: clean(r.flightID?.scheduledDate),
-      estimatedUtc: clean(r.actualDate),
-      terminal: clean(r.arrivingTerminal),
-      aircraft: clean(r.airplaneModel),
-      gate: clean(r.boardingGate?.firstBoardingGate),
-      baggageBelt: clean(r.baggageClaim?.firstBaggageClaim),
-      mainFlight: mf
-        ? {
-            airline: clean(mf.airlineIATA) ?? "",
-            flightNumber: clean(mf.flightNumber) ?? "",
-            // typo in AENA's API: "aiportIATA" (missing r)
-            airport: clean(mf.aiportIATA) ?? clean(mf.airportIATA),
-          }
-        : undefined,
-      source: "rest",
-    };
-  });
+  return rows.map((r) => normalizeRestRow(r, airport, direction));
 }
 
 export { hasRestCredentials };

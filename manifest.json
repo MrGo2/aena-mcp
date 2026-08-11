@@ -1,0 +1,59 @@
+{
+  "manifest_version": "0.3",
+  "name": "mcp-aena",
+  "display_name": "AENA Flights MCP",
+  "version": "0.1.0",
+  "description": "Flight data for the 50 Spanish AENA airports, unified over the public website API and the OAuth2 REST API.",
+  "long_description": "Gives Claude flight data for every airport in Spain's AENA network through a single MCP server.\n\nIt puts both of AENA's flight APIs behind one flight shape. The public website API needs no credentials and sees roughly 14 days ahead with local times. The OAuth2 REST API needs a client secret and adds past flights, UTC timestamps and the real operating flight behind a codeshare. The server picks the right source automatically, or you can force either.\n\nWithout a secret it runs in website-only mode and is still fully usable for discovery.",
+  "author": {
+    "name": "Carlos Lorenzo",
+    "url": "https://github.com/MrGo2"
+  },
+  "homepage": "https://github.com/MrGo2/aena-mcp",
+  "documentation": "https://github.com/MrGo2/aena-mcp#readme",
+  "support": "https://github.com/MrGo2/aena-mcp/issues",
+  "license": "MIT",
+  "privacy_policies": [
+    "https://github.com/MrGo2/aena-mcp/blob/main/PRIVACY.md"
+  ],
+  "keywords": ["mcp", "aena", "flights", "airport", "spain", "flight-tracking"],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {
+        "AENA_CLIENT_SECRET": "${user_config.client_secret}",
+        "AENA_CLIENT_ID": "${user_config.client_id}",
+        "AENA_TENANT_ID": "${user_config.tenant_id}"
+      }
+    }
+  },
+  "user_config": {
+    "client_secret": {
+      "type": "string",
+      "title": "AENA REST client secret",
+      "description": "Optional. Enables the OAuth2 REST API (past flights, UTC times, codeshare operator). Leave empty to run in website-only mode.",
+      "sensitive": true,
+      "required": false
+    },
+    "client_id": {
+      "type": "string",
+      "title": "AENA REST client id",
+      "description": "Optional. Has a working default; only set to override.",
+      "required": false
+    },
+    "tenant_id": {
+      "type": "string",
+      "title": "Azure AD tenant id",
+      "description": "Optional. Has a working default; only set to override.",
+      "required": false
+    }
+  },
+  "compatibility": {
+    "runtimes": {
+      "node": ">=20"
+    }
+  }
+}

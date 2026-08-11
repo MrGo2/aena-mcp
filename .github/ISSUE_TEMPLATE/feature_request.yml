@@ -1,0 +1,15 @@
+name: Feature request
+description: A tool or capability you'd like to see
+labels: [enhancement]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What would you like the server to do?
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: What are you building / automating?
+      description: Optional, but helps prioritize.

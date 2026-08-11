@@ -1,5 +1,9 @@
 # AENA Flights MCP
 
+[![CI](https://github.com/MrGo2/aena-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/MrGo2/aena-mcp/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/mcp-aena)](https://www.npmjs.com/package/mcp-aena)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 An MCP server for flight data across the 50 Spanish airports run by AENA. It puts both of AENA's flight APIs behind one clean set of tools, so an agent asks for flights and gets back the same flight shape no matter which API answered.
 
 ## Why two APIs
@@ -38,6 +42,22 @@ Copy `.env.example` to `.env`. The website API needs nothing. For the REST API s
   }
 }
 ```
+
+## Development
+
+```bash
+pnpm install
+pnpm build      # tsc → dist/
+pnpm test       # unit tests over captured fixtures, no network, no credentials
+pnpm inspect    # drive a live stdio session with the MCP inspector
+```
+
+Parsing lives in pure normalizers (`normalizeWebsiteRow`, `normalizeRestRow`)
+so the mapping is tested without a live call. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+CI runs the tests on Node 20 and 22 plus an MCP inspector smoke. Tagged pushes
+(`v*`) publish to npm (OIDC trusted publishing), the MCP Registry, and attach a
+`.mcpb` bundle to the GitHub release.
 
 ## Notes on the data
 
