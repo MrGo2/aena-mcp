@@ -18,7 +18,7 @@
     "start": "node dist/index.js",
     "dev": "tsc && node dist/index.js",
     "pretest": "tsc",
-    "test": "node --test 'test/*.test.mjs'",
+    "test": "node --test test/normalize.test.mjs test/format.test.mjs",
     "prepublishOnly": "tsc",
     "inspect": "pnpm build && pnpm dlx @modelcontextprotocol/inspector node dist/index.js"
   },
