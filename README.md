@@ -4,6 +4,8 @@
 [![npm](https://img.shields.io/npm/v/mcp-aena)](https://www.npmjs.com/package/mcp-aena)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+**Español: [README.es.md](README.es.md)**
+
 An MCP server for flight data across the 50 Spanish airports run by AENA. It puts both of AENA's flight APIs behind one clean set of tools, so an agent asks for flights and gets back the same flight shape no matter which API answered.
 
 ## Why two APIs
