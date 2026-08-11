@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.MrGo2/aena-mcp",
-  "description": "Flight data for the 50 Spanish AENA airports, unified over the public website API and the OAuth2 REST API",
+  "description": "Flight data for Spain's 50 AENA airports over the public and OAuth2 REST APIs",
   "version": "0.1.0",
   "repository": {
     "url": "https://github.com/MrGo2/aena-mcp",
