@@ -67,6 +67,11 @@ jobs:
       # Skip if already on npm, so a failed later step can be re-run without
       # dying on EPUBLISHCONFLICT.
       - name: Publish to npm
+        env:
+          # Granular token with 2FA bypass (stored as repo secret, mirrors
+          # credentials.toml [npm_registry]). Used instead of OIDC because a
+          # trusted publisher is not configured for this package.
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
           TAG_VERSION=${GITHUB_REF#refs/tags/v}
           if npm view "mcp-aena@$TAG_VERSION" version >/dev/null 2>&1; then
