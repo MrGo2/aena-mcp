@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { norm, matchesFlight, formatFlight } from "../dist/format.js";
+import { norm, matchesFlight, formatFlight, inWindow } from "../dist/format.js";
 
 const restFlight = {
   flightNumber: "UX7235",
@@ -65,4 +65,19 @@ test("formatFlight (website) shows local time and no empty codeshare line", () =
 test("formatFlight shows codeshare operator when present", () => {
   const out = formatFlight({ ...restFlight, mainFlight: { airline: "VLG", flightNumber: "1294" } });
   assert.match(out, /operated by VLG1294 \(codeshare\)/);
+});
+
+test("formatFlight folds codeshares into the flight line", () => {
+  const out = formatFlight({ ...restFlight, codeshares: ["IBE5504", "QTR3719"] });
+  assert.match(out, /UX7235 \(\+IBE5504 QTR3719\) {2}MAD → LCG/);
+  assert.doesNotMatch(out, /codeshares:/);
+});
+
+test("inWindow anchors the time window to a date (website spans 14 days)", () => {
+  const today = { ...restFlight, scheduledUtc: undefined, scheduledLocal: "14:10:00", date: "12/08/2026", source: "website" };
+  const tomorrow = { ...today, date: "13/08/2026" };
+  assert.equal(inWindow(today, "12/08/2026", "12:00", "20:00"), true);
+  assert.equal(inWindow(tomorrow, "12/08/2026", "12:00", "20:00"), false);
+  assert.equal(inWindow(today, "12/08/2026", "15:00", "20:00"), false);
+  assert.equal(inWindow(today, undefined, undefined, undefined), true);
 });
