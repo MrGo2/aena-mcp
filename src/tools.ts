@@ -1,7 +1,7 @@
 import { hasRestCredentials } from "./config.js";
 import { fetchWebsite, fetchRest, fetchAirports, type Flight } from "./aena/client.js";
-import { matchesFlight, formatFlight, inWindow, todayMadrid } from "./format.js";
-import { collapseCodeshares } from "./aena/collapse.js";
+import { matchesFlight, formatFlight, inWindow, todayMadrid, sortByProximity, nowMadridMinutes } from "./format.js";
+import { collapseCodeshares, localParts } from "./aena/collapse.js";
 
 export const serverInstructions = `Flight data for the 50 Spanish AENA airports.
 
@@ -93,10 +93,19 @@ export function registerTools(server: ToolServer, z: any): void {
       } else {
         flights = await fetchWebsite(ap, direction);
       }
-      const hits = collapseCodeshares(flights).filter((f) => matchesFlight(f, flightNumber));
+      const hits = sortByProximity(
+        collapseCodeshares(flights).filter((f) => matchesFlight(f, flightNumber)),
+        nowMadridMinutes(),
+      );
       if (hits.length === 0)
         return { content: [{ type: "text", text: `No ${direction} flight matching "${flightNumber}" at ${ap}.` }] };
-      return { content: [{ type: "text", text: hits.map(formatFlight).join("\n\n") }] };
+      // A daily flight matches once per day in the window; return the
+      // occurrence closest to now and just mention the rest.
+      const [best, ...rest] = hits;
+      const others = rest.length
+        ? `\n\nAlso matches on other days: ${rest.map((f) => `${f.flightNumber} ${localParts(f).date ?? "?"} ${localParts(f).hhmm ?? ""}`).join(", ")}`
+        : "";
+      return { content: [{ type: "text", text: formatFlight(best) + others }] };
     },
   );
 

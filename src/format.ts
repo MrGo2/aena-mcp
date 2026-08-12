@@ -33,6 +33,35 @@ export function inWindow(f: Flight, onDate?: string, fromLocal?: string, toLocal
   return true;
 }
 
+// Minutes since epoch of the flight's scheduled local time, treating local
+// wall-clock as UTC. Consistent on both sides of a comparison, so DST shifts
+// cancel out for "which flight is closest to now" purposes.
+export function localEpochMinutes(f: Flight): number | undefined {
+  const { date, minutes } = localParts(f);
+  if (!date || minutes == null) return undefined;
+  const [d, m, y] = date.split("/").map(Number);
+  return Date.UTC(y, m - 1, d) / 60000 + minutes;
+}
+
+// A daily flight shows up once per day in the source window (REST ~36h,
+// website ~14 days). Sort matches by distance to `nowMin` so the caller can
+// take the closest occurrence as the best match.
+export function sortByProximity(flights: Flight[], nowMin: number): Flight[] {
+  const dist = (f: Flight) => {
+    const e = localEpochMinutes(f);
+    return e == null ? Number.MAX_SAFE_INTEGER : Math.abs(e - nowMin);
+  };
+  return [...flights].sort((a, b) => dist(a) - dist(b));
+}
+
+// "Now" on the same scale as localEpochMinutes: Madrid wall-clock as UTC.
+export function nowMadridMinutes(): number {
+  const fmt = new Intl.DateTimeFormat("es-ES", { timeZone: "Europe/Madrid", year: "numeric", month: "2-digit", day: "2-digit", hour: "2-digit", minute: "2-digit", hour12: false }).formatToParts(new Date());
+  const g = (t: string) => +(fmt.find((p) => p.type === t)?.value ?? 0);
+  const hh = g("hour") === 24 ? 0 : g("hour");
+  return Date.UTC(g("year"), g("month") - 1, g("day")) / 60000 + hh * 60 + g("minute");
+}
+
 export function formatFlight(f: Flight): string {
   const { date, hhmm } = localParts(f);
   const est =

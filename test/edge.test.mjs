@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { norm, matchesFlight, formatFlight, inWindow, todayMadrid } from "../dist/format.js";
+import { norm, matchesFlight, formatFlight, inWindow, todayMadrid, sortByProximity, localEpochMinutes } from "../dist/format.js";
 import { collapseCodeshares, localParts } from "../dist/aena/collapse.js";
 import { normalizeWebsiteRow, normalizeRestRow, parseAirlineCodes, clean } from "../dist/aena/client.js";
 
@@ -148,4 +148,23 @@ test("parseAirlineCodes tolerates short/garbage strings", () => {
 test("clean() stringifies numbers", () => {
   assert.equal(clean(2), "2");
   assert.equal(clean(0), "0");
+});
+
+test("sortByProximity picks today's occurrence of a daily flight, not tomorrow's", () => {
+  const today = mk({ flightNumber: "UX7235", scheduledUtc: "2026-08-12T17:20:00.000Z" });   // 19:20 Madrid
+  const tomorrow = mk({ flightNumber: "UX7235", scheduledUtc: "2026-08-13T17:20:00.000Z" });
+  // now = 12/08/2026 16:40 Madrid
+  const now = Date.UTC(2026, 7, 12) / 60000 + 16 * 60 + 40;
+  assert.equal(sortByProximity([tomorrow, today], now)[0], today);
+  // late at night, tomorrow morning's flight is closer than this morning's
+  const thisMorning = mk({ flightNumber: "VY1", scheduledUtc: "2026-08-12T06:00:00.000Z" }); // 08:00
+  const tomorrowMorning = mk({ flightNumber: "VY1", scheduledUtc: "2026-08-13T06:00:00.000Z" });
+  const lateNight = Date.UTC(2026, 7, 12) / 60000 + 23 * 60 + 30;
+  assert.equal(sortByProximity([thisMorning, tomorrowMorning], lateNight)[0], tomorrowMorning);
+});
+
+test("localEpochMinutes works for website flights and undefined without a time", () => {
+  const web = mk({ scheduledLocal: "17:05:00", date: "12/08/2026", source: "website" });
+  assert.equal(localEpochMinutes(web), Date.UTC(2026, 7, 12) / 60000 + 17 * 60 + 5);
+  assert.equal(localEpochMinutes(mk({})), undefined);
 });
