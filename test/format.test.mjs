@@ -31,10 +31,11 @@ test("matchesFlight is case- and separator-insensitive, empty query matches all"
   assert.equal(matchesFlight(restFlight, undefined), true);
 });
 
-test("formatFlight (rest) shows UTC window, route and status", () => {
+test("formatFlight (rest) shows local Madrid time, route and status", () => {
   const out = formatFlight(restFlight);
   assert.match(out, /UX7235 {2}MAD → LCG/);
-  assert.match(out, /\(UTC\)/);
+  assert.match(out, /\(hora local\)/);
+  assert.match(out, /16:20/); // 14:20 UTC → 16:20 Madrid (summer)
   assert.match(out, /\[Completed \/ BOR\]/);
   assert.match(out, /belt 1/);
 });
@@ -55,7 +56,8 @@ test("formatFlight (website) shows local time and no empty codeshare line", () =
     source: "website",
   };
   const out = formatFlight(web);
-  assert.match(out, /\(local\)/);
+  assert.match(out, /\(hora local\)/);
+  assert.match(out, /17:05/);
   assert.match(out, /airline: Iberia/);
   assert.doesNotMatch(out, /operated by/);
 });

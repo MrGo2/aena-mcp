@@ -23,6 +23,7 @@ export interface Flight {
   gate?: string;
   baggageBelt?: string;
   mainFlight?: { airline: string; flightNumber: string; airport?: string };
+  codeshares?: string[]; // marketing flight numbers collapsed into this one
   source: "website" | "rest";
 }
 

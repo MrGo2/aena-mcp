@@ -9,9 +9,23 @@ import { dirname, join } from "node:path";
 import { config, hasRestCredentials } from "./config.js";
 import { fetchWebsite, fetchRest, fetchAirports, type Flight } from "./aena/client.js";
 import { matchesFlight, formatFlight } from "./format.js";
+import { collapseCodeshares, localParts } from "./aena/collapse.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const { version } = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf8"));
+
+// Keep flights whose local scheduled time is within [fromLocal, toLocal] (HH:MM).
+function inWindow(f: Flight, fromLocal?: string, toLocal?: string): boolean {
+  if (!fromLocal && !toLocal) return true;
+  const { minutes } = localParts(f);
+  if (minutes == null) return true;
+  const toMin = (s?: string) => (s ? +s.split(":")[0] * 60 + +(s.split(":")[1] ?? 0) : undefined);
+  const lo = toMin(fromLocal);
+  const hi = toMin(toLocal);
+  if (lo != null && minutes < lo) return false;
+  if (hi != null && minutes > hi) return false;
+  return true;
+}
 
 const server = new McpServer(
   { name: "aena-mcp", version, title: "AENA Flights MCP" },
@@ -34,17 +48,20 @@ server.registerTool(
   {
     title: "Search flights",
     description:
-      "List flights for an AENA airport (arrivals or departures), optionally filtered by flight number. Returns a unified flight list from the REST or website API.",
+      "List flights for an AENA airport (arrivals or departures). Codeshares of the same physical flight are collapsed into one entry by default. Filter by flight number and/or a local-time window (e.g. afternoon = fromLocal 12:00, toLocal 20:00). Times in the output are local Madrid time.",
     inputSchema: {
-      airport: z.string().length(3).describe("Airport IATA code, e.g. MAD, BCN, LCG"),
+      airport: z.string().length(3).describe("Airport IATA code, e.g. MAD, BCN, SCQ"),
       direction: z.enum(["arrivals", "departures"]),
       flightNumber: z.string().optional().describe("Filter client-side, e.g. IB0459 or UX7235"),
+      fromLocal: z.string().regex(/^\d{1,2}:\d{2}$/).optional().describe("Only flights scheduled at or after this local time (HH:MM), e.g. 12:00 for afternoon"),
+      toLocal: z.string().regex(/^\d{1,2}:\d{2}$/).optional().describe("Only flights scheduled at or before this local time (HH:MM), e.g. 20:00 for afternoon"),
+      collapseCodeshares: z.boolean().default(true).describe("Collapse codeshares of the same flight into one entry (default true)"),
       source: z.enum(["auto", "website", "rest"]).default("auto"),
       hoursBack: z.number().default(6).describe("REST window: hours into the past"),
       hoursForward: z.number().default(12).describe("REST window: hours into the future"),
     },
   },
-  async ({ airport, direction, flightNumber, source, hoursBack, hoursForward }) => {
+  async ({ airport, direction, flightNumber, fromLocal, toLocal, collapseCodeshares: collapse, source, hoursBack, hoursForward }) => {
     const ap = airport.toUpperCase();
     const useRest = source === "rest" || (source === "auto" && hasRestCredentials());
     let flights: Flight[];
@@ -57,8 +74,12 @@ server.registerTool(
     } else {
       flights = await fetchWebsite(ap, direction);
     }
-    const filtered = flights.filter((f) => matchesFlight(f, flightNumber));
-    const header = `${filtered.length} ${direction} at ${ap}${flightNumber ? ` matching "${flightNumber}"` : ""} (source: ${useRest ? "rest" : "website"})`;
+    if (collapse) flights = collapseCodeshares(flights);
+    const filtered = flights.filter(
+      (f) => matchesFlight(f, flightNumber) && inWindow(f, fromLocal, toLocal),
+    );
+    const win = fromLocal || toLocal ? ` between ${fromLocal ?? "…"} and ${toLocal ?? "…"} local` : "";
+    const header = `${filtered.length} ${direction} at ${ap}${flightNumber ? ` matching "${flightNumber}"` : ""}${win} (source: ${useRest ? "rest" : "website"})`;
     if (filtered.length === 0) return { content: [{ type: "text", text: header }] };
     return { content: [{ type: "text", text: `${header}\n\n${filtered.map(formatFlight).join("\n\n")}` }] };
   },
@@ -86,7 +107,7 @@ server.registerTool(
     } else {
       flights = await fetchWebsite(ap, direction);
     }
-    const hits = flights.filter((f) => matchesFlight(f, flightNumber));
+    const hits = collapseCodeshares(flights).filter((f) => matchesFlight(f, flightNumber));
     if (hits.length === 0)
       return { content: [{ type: "text", text: `No ${direction} flight matching "${flightNumber}" at ${ap}.` }] };
     return { content: [{ type: "text", text: hits.map(formatFlight).join("\n\n") }] };
