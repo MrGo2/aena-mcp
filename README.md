@@ -20,6 +20,13 @@ That link opens claude.ai with the connector prefilled; just confirm. Works on e
 
 Prefer to add it by hand? Claude → Settings → Connectors → Add custom connector, name it `AENA Flights` and paste the URL above.
 
+### 🤖 Also works in ChatGPT
+
+ChatGPT has no one-click install link, but the same server works there (Plus, Pro and Business plans, web only):
+
+1. Settings → Apps → Advanced settings → enable **Developer mode**
+2. In the Apps panel press **+** and add the server with URL `https://aena-mcp.carlos-ls.workers.dev/mcp`, authentication: none
+
 ## 💬 Things you can ask
 
 - 🛫 "Departures from MAD between 16:00 and 18:00"
