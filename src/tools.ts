@@ -29,6 +29,7 @@ export function registerTools(server: ToolServer, z: any): void {
       title: "Search flights",
       description:
         "List flights for an AENA airport (arrivals or departures). Codeshares of the same physical flight are collapsed into one entry by default. Filter by flight number and/or a local-time window (e.g. afternoon = fromLocal 12:00, toLocal 20:00). Times in the output are local Madrid time.",
+      annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: {
         airport: z.string().length(3).describe("Airport IATA code, e.g. MAD, BCN, SCQ"),
         direction: z.enum(["arrivals", "departures"]),
@@ -76,6 +77,7 @@ export function registerTools(server: ToolServer, z: any): void {
     {
       title: "Get a specific flight",
       description: "Find one flight by number at an airport. Convenience wrapper over search_flights that returns the single best match.",
+      annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: {
         airport: z.string().length(3).describe("Airport IATA code"),
         flightNumber: z.string().describe("e.g. IB0459, UX7235"),
@@ -114,6 +116,7 @@ export function registerTools(server: ToolServer, z: any): void {
     {
       title: "List AENA airports",
       description: "List all Spanish airports in the AENA network with IATA/ICAO codes and city. Fetched live, so always current.",
+      annotations: { readOnlyHint: true, openWorldHint: true },
       inputSchema: {},
     },
     async () => {
